@@ -8,6 +8,46 @@ public enum Packets {
     Packets() {};
 
     /**
+     * The index in the body of the packet for the respective LED position on the device
+     * Ordered by ASCII art position
+     */
+    public static final int LOGO_POS_RED = 12;
+    public static final int LOGO_POS_GREEN = 13;
+    public static final int LOGO_POS_BLUE = 14;
+
+    public static final int SIDE_ONE_POS_RED = 0;
+    public static final int SIDE_ONE_POS_GREEN = 1;
+    public static final int SIDE_ONE_POS_BLUE = 2;
+
+    public static final int CORNER_ONE_POS_RED = 3;
+    public static final int CORNER_ONE_POS_GREEN = 4;
+    public static final int CORNER_ONE_POS_BLUE = 5;
+
+    public static final int SIDE_TWO_POS_RED = 6;
+    public static final int SIDE_TWO_POS_GREEN = 7;
+    public static final int SIDE_TWO_POS_BLUE =  8;
+
+    public static final int CORNER_TWO_POS_RED = 9;
+    public static final int CORNER_TWO_POS_GREEN = 10;
+    public static final int CORNER_TWO_POS_BLUE = 11;
+
+    public static final int SIDE_THREE_POS_RED = 15;
+    public static final int SIDE_THREE_POS_GREEN = 16;
+    public static final int SIDE_THREE_POS_BLUE = 17;
+
+    public static final int CORNER_THREE_POS_RED = 18;
+    public static final int CORNER_THREE_POS_GREEN = 19;
+    public static final int CORNER_THREE_POS_BLUE = 20;
+
+    public static final int SIDE_FOUR_POS_RED = 21;
+    public static final int SIDE_FOUR_POS_GREEN = 22;
+    public static final int SIDE_FOUR_POS_BLUE =  23;
+
+    public static final int CORNER_FOUR_POS_RED = 24;
+    public static final int CORNER_FOUR_POS_GREEN = 25;
+    public static final int CORNER_FOUR_POS_BLUE = 26;
+
+    /**
      * Header
      * First four bytes seem to be in all packets that contain color hex bodies
      */
@@ -15,25 +55,36 @@ public enum Packets {
             0x07, 0x22, 0x14, 0x00
     };
 
+    public static final byte[] PADDING = new byte[] {
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
     /** ASCII REFERENCES
      *
+     *
+     *     %%LGO%
+     *     %%%%%%
+     *     %%%%%%
      *     %%%%%%
      *     %%%%%%
      *     %&%%%%
      *     %&%&%%
      *     %&&&&&
      *     &&&&&&  *&&&/
-     *     %&&%(/(&& C4 &&&&
-     *     %(( L1 &&&&&&&&&&&&&
-     *   &&&@&@@@&&@&&&&& L4 &&&&%
-     * &&& C1 @@@&&&&&&&&&&&&&&&&&&&
-     * %%&&&&&@&&&&%&&&&&&&&&&& C3 &&&,#
-     *  (%%%& L2 &&&&&&&&&&&&&&&&%%%.
-     *     #%%*&&&&&&&&&&&&& L3 %%.
+     *     %&&%(/(&& C1 &&&&
+     *     %(( S1 &&&&&&&&&&&&&
+     *   &&&@&@@@&&@&&&&& S2 &&&&%
+     * &&& C4 @@@&&&&&&&&&&&&&&&&&&&
+     * %%&&&&&@&&&&%&&&&&&&&&&& C2 &&&,#
+     *  (%%%& S4 &&&&&&&&&&&&&&&&%%%.
+     *     #%%*&&&&&&&&&&&&& S3 %%.
      *       .%%%&&&&&&&&&%%%.
-     *          .%%%@ C2 %%%(
+     *          .%%%@ C3 %%%(
      *             ,&&&(
+     *
+     *   LOG - Logo LED
      *
      *   C1 - Corner One
      *   C2 - Corner TWO
@@ -47,33 +98,8 @@ public enum Packets {
      */
 
     /**
-     *             .&&&&&&&%
-     *              /& &&&@%
-     *                 %%&&&
-     *                 %%%&&
-     *                 %LGO%
-     *                 %%%&%
-     *                 %%%%%
-     *                 %%%&%
-     *                 %%&&%
-     *                 %%&&%
-     *                 %&&&%
-     *                 &&&&%
-     *                 &&&&%
-     *                 &&&&%
-     *                 &&&&%
-     *             ,   %%&&%
-     *        &&&&&&&%&@@@@&.
-     *   ,&&&&&&&&&&%%&@@@@@&&
-     *   %&&&&%&&&&&&&&@@@@%%%%*
-     *   .,,(/%&&&&&&&@&%%#%/..
-     *         .,,*((%&%/,.
-     *
-     *  LGO - Logo LED
-     */
-
-    /**
      * Structure of the packet is explained here
+     *
      * /**
      * * order seems to be every 3 bytes is a different LED on the device
      * * the colors are represented as Hexidecimal colors
@@ -86,22 +112,31 @@ public enum Packets {
      * * cR - color Red, cG - color Green, cB - color Blue
      * *
      * * so if you set C1cR to (byte)0xFF it will change corner 1 color to red
-     */
-    public static final byte[] Structure = new byte[]
-            { //??  | ?? | ??  | ??  |L1cR, L1cG, L1cB| C4cR
-                    0x07, 0x22, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    //C4cG, C4cB |L4cR, L4cG, L4cB |C3cR, C3cG, C3cB
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    //LGR,  LGG,  LGB | L3cR, l3cG, L3cB | C2cR, C2cG
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    //C2cB, C3cR, C3cG, C3cB,|C1cR, C1cG, C1cB | ??
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-                    // The rest of the packet seems to be padding.
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+     *
+     *
+     * Packet Header (First four bytes) mean change LED values?
+     *
+     * ?? - UNKNOWN
+     *
+     * ??  |  ?? |   ?? |   ?? |L1cR| L1cG| L1cB| C4cR
+     * 0x07| 0x22| 0x14| 0x00 |0x00| 0x00| 0x00| 0x00
+     *
+     * C4cG | C4cB |L4cR | L4cG | L4cB |C3cR | C3cG | C3c
+     * 0x00 | 0x00| 0x00 | 0x00| 0x00 | 0x00 | 0x00 | 0x00
+     *
+     * LGR  | LGG | LGB | L3cR | l3cG | L3cB | C2cR | C2cG
+     * 0x00 |0x00| 0x00 | 0x00 | 0x00 | 0x00 | 0x00 | 0x00
+     *
+     * C2cB |C3cR | C3cG | C3cB |C1cR |C1cG | C1cB | ??
+     * 0x00| 0x00 | 0x00 | 0x00 |0x00 |0x00 | 0x00 |0x00
+     *
+     * The remaining bytes are padding as far as i can tell
+     * 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     * 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     * 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     * 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+     *
+     * /
 
 
 //    public static final byte[] setupPacket = new byte[] {0xff, 0x98, 0x00, 0xff,
@@ -111,9 +146,8 @@ public enum Packets {
 
     /**
      * TODO:
-     * Dig and dive into these packets to understand what they are/do/are necessary
+     * Dig and dive into these packets to understand what they are/do
      */
-
     public static final byte[] setupOne = {0x21, 0x0A, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     public static final byte[] setupTwo = {(byte) 0x80, 0x06, 0x04, 0x03, 0x09, 0x04, (byte) 0x82, 0x00};
 

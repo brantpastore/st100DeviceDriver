@@ -19,6 +19,46 @@ public class PacketManager extends Thread {
     /** The communication timeout in milliseconds. */
     private static final int TIMEOUT = 5000;
 
+
+    /**
+     * FormPacket
+     * @param bodyData
+     * @return
+     * Combines Header with the supplied bodydata and adds trailing padding
+     */
+    public static byte[] FormPacket(byte[] bodyData) {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            out.write(Packets.HEADER);
+            out.write(bodyData);
+            out.write(Packets.PADDING);
+
+            byte[] formedPacket = out.toByteArray();
+
+            return formedPacket;
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    /*
+    * L1cR| L1cG| L1cB| C4cR
+    *   0 |    1|    2|    3|
+    * C4cG| C4cB| L4cR| L4cG| L4cB| C3cR| C3cG| C3cB
+    *    4|    5|    6|    7|    8|    9|   10| 11
+    * LGR |  LGG| LGB | L3cR| l3cG| L3cB| C2cR| C2cG
+    *   12|   13|   14|   15|   16|   17|   18| 19
+    * C2cB| S2cR| S2cG| S2cB| C1cR| C1cG| C1cB| ??
+    *   20|   21|   22|   23|   24|   25|   26| 27,
+     */
+    public static byte[] SetColor(byte[] packet, int ledLocation, byte colorData) {
+        packet[ledLocation] = colorData;
+        byte[] nPacket = packet;
+        byte[] resPacket = FormPacket(packet);
+        return resPacket;
+    }
+
     /**  */
     public void InitIRQConnection() {
 

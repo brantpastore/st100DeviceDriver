@@ -203,31 +203,42 @@ public class DeviceHandler {
         pipe.open();
         try {
             int sendIt = 0;
-            sendIt = pipe.syncSubmit(setupOne);
-            System.out.println(sendIt + " bytes sent");
-
-            sendIt = pipe.syncSubmit(setupTwo);
-            System.out.println(sendIt + " bytes sent");
-
-            sendIt = pipe.syncSubmit(ourReply);
-            System.out.println(sendIt + " bytes sent");
-
             sendIt = pipe.syncSubmit(initPacket);
-            System.out.println(sendIt + " bytes sent");
+            System.out.println("[InitPacket] " + sendIt + " bytes sent");
 
-            sendIt = pipe.syncSubmit(initPacketTwo);
-            System.out.println(sendIt + " bytes sent");
-
-            sendIt = pipe.syncSubmit(initPacketThree);
-            System.out.println(sendIt + " bytes sent");
-
-            sendIt = pipe.syncSubmit(SET_TO_RED);
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.SIDE_ONE_POS_BLUE, (byte)0xFF));
             Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
 
-            sendIt = pipe.syncSubmit(SET_TO_GREEN);
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.SIDE_TWO_POS_BLUE, (byte)0xFF));
+            System.out.println(sendIt + " bytes sent");
+
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.LOGO_POS_BLUE, (byte)0xFF));
             Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
 
-            sendIt = pipe.syncSubmit(SET_TO_BLUE);
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.SIDE_THREE_POS_BLUE, (byte)0xFF));
+            Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.SIDE_FOUR_POS_BLUE, (byte)0xFF));
+            Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.CORNER_ONE_POS_RED, (byte)0xFF));
+            Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.CORNER_TWO_POS_RED, (byte)0xFF));
+            Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.CORNER_THREE_POS_RED, (byte)0xFF));
+            Thread.sleep(2000);
+            System.out.println(sendIt + " bytes sent");
+
+            sendIt = pipe.syncSubmit(PacketManager.SetColor(Packets.PADDING, Packets.CORNER_FOUR_POS_RED, (byte)0xFF));
             Thread.sleep(2000);
             System.out.println(sendIt + " bytes sent");
         } catch (InterruptedException e) {
