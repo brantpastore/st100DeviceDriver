@@ -1,6 +1,0 @@
-This directory contains scripts to convert Exported html USB logs to Hex formatted data
-
-Place the exported html in this directory and name the file log.html
-Open a shell and execute RunMe.sh
-???
-profit!!
