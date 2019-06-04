@@ -1,46 +1,103 @@
 package Corsair.ST100;
 
-import javax.usb.UsbException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.logging.Logger;
 
 /**
  * ColorSettingsUtility
  * Used to provide the predefined settings aswell as custom user settings
  */
 public class ColorSettingsUtility {
+    /**
+     * ColorSettingsUtility Logger
+     */
+    Logger nLogger = Logger.getLogger("CSettingsUtilityLog");
+
     public static DeviceHandler dh = null;
 
+    /**
+     *
+     * @param dHandler
+     */
     public static void setHandler(DeviceHandler dHandler) {
         dh = dHandler;
     }
 
-    public static ArrayList<Packet> SpiralRainbow_Clockwise = new ArrayList<>();
-    public static ArrayList<Packet> SpiralRainbow_CounterClockwise = new ArrayList<>();
+    /**
+     * Stores Spiral Rainbow clockwise
+     */
+    public static ArrayList<Packet> SpiralRainbow = new ArrayList<>();
 
+    /**
+     * Stores Rainbow Wave left packets
+     */
     public static ArrayList<Packet> RainbowWave_Left = new ArrayList<>();
+
+    /**
+     * Stores Rainbow Wave right packets
+     */
     public static ArrayList<Packet> RainbowWave_Right = new ArrayList<>();
 
+    /**
+     * Stores Color Shift packets
+     */
     public static ArrayList<Packet> ColorShift = new ArrayList<>();
 
+    /**
+     * Stores Color Wave packets
+     */
     public static ArrayList<Packet> ColorWave = new ArrayList<>();
+
+    /**
+     * Stores Color Wave left packets
+     */
     public static ArrayList<Packet> ColorWave_Left = new ArrayList<>();
+
+    /**
+     * Stores Color Wave right packets
+     */
     public static ArrayList<Packet> ColorWave_Right = new ArrayList<>();
+
+    /**
+     * Stores Color Wave up packets
+     */
     public static ArrayList<Packet> ColorWave_Up = new ArrayList<>();
+
+    /**
+     * Stores Color Wave down packets
+     */
     public static ArrayList<Packet> ColorWave_Down = new ArrayList<>();
 
+    /**
+     * Stores Color Pulse packets
+     */
     public static ArrayList<Packet> ColorPulse = new ArrayList<>();
 
+    /**
+     * Stores our Visor packets
+     */
     public static ArrayList<Packet> visorPacketList = new ArrayList();
 
+    /**
+     *
+     * @return
+     */
     public static boolean isClockwise() {
         return Clockwise;
     }
 
+    /**
+     *
+     * @param clockwise
+     */
     public static void setClockwise(boolean clockwise) {
         Clockwise = clockwise;
     }
 
+    /**
+     * Stores the direction which colors are sent
+     */
     public static boolean Clockwise = false;
 
     /**
@@ -48,13 +105,16 @@ public class ColorSettingsUtility {
      * clockwise is used to determine the change in direction of the colors
      */
     public static void SpiralRainbow() {
-        try {
-            if (isClockwise()) {
-                dh.runIt(SpiralRainbow_Clockwise);
-            } else { // Counterclockwise
-                dh.runIt(SpiralRainbow_CounterClockwise);
-            }
-        } catch (UsbException e) {
+        Controller.intervalSlider.setMin(SettingsIntervals.SPIRAL_RAINBOW_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.SPIRAL_RAINBOW_FAST);
+
+        if (isClockwise()) {
+            dh.setCurrentPacketList(SpiralRainbow);
+        } else { // Counterclockwise
+            ArrayList<Packet> reversed = new ArrayList<>();
+            reversed.addAll(SpiralRainbow);
+            Collections.reverse(reversed);
+            dh.setCurrentPacketList(reversed);
         }
     }
 
@@ -63,13 +123,13 @@ public class ColorSettingsUtility {
      * @param direction
      */
     public static void RainbowWave(int direction) {
-        try {
-            if (direction == 0) { // LEFT
-                dh.runIt(RainbowWave_Left);
-            } else if (direction == 1) { // RIGHT
-                dh.runIt(RainbowWave_Right);
-            }
-        } catch (UsbException e) {
+        Controller.intervalSlider.setMin(SettingsIntervals.RAINBOW_WAVE_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.RAINBOW_WAVE_FAST);
+        Controller.intervalSlider.setValue(SettingsIntervals.RAINBOW_WAVE_MEDIUM);
+        if (direction == 0) { // LEFT
+            dh.setCurrentPacketList(RainbowWave_Left);
+        } else if (direction == 1) { // RIGHT
+            dh.setCurrentPacketList(RainbowWave_Right);
         }
     }
 
@@ -77,14 +137,16 @@ public class ColorSettingsUtility {
      * ColorShift
      */
     public static void ColorShift() {
-        try {
-            if (isClockwise()) {
-                dh.runIt(ColorShift);
-            } else { // Counterclockwise
-                Collections.reverse(ColorShift);
-                dh.runIt(ColorShift);
-            }
-        } catch (UsbException e) {
+        Controller.intervalSlider.setMin(SettingsIntervals.COLOR_SHIFT_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.COLOR_SHIFT_FAST);
+        Controller.intervalSlider.setValue(SettingsIntervals.COLOR_SHIFT_MEDIUM);
+        if (isClockwise()) {
+            dh.setCurrentPacketList(ColorShift);
+        } else { // Counterclockwise
+            ArrayList<Packet> reversed = new ArrayList<>();
+            reversed.addAll(ColorShift);
+            Collections.reverse(reversed);
+            dh.setCurrentPacketList(reversed);
         }
     }
 
@@ -93,58 +155,68 @@ public class ColorSettingsUtility {
      * @param direction
      */
     public static void ColorWave(int direction) {
-        try {
-            switch (direction) {
-                case 0:
-                    if (isClockwise()) {
-                        dh.runIt(ColorWave);
-                    } else {
-                        Collections.reverse(ColorWave);
-                        dh.runIt(ColorWave);
-                    }
-                    break;
+        Controller.intervalSlider.setMin(SettingsIntervals.COLOR_WAVE_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.COLOR_WAVE_FAST);
+        Controller.intervalSlider.setValue(SettingsIntervals.COLOR_WAVE_MEDIUM);
+        switch (direction) {
+            case 0:
+                if (isClockwise()) {
+                    dh.setCurrentPacketList(ColorWave);
+                } else {
+                    ArrayList<Packet> reversed = new ArrayList<>();
+                    reversed.addAll(ColorWave);
+                    Collections.reverse(reversed);
+                    dh.setCurrentPacketList(reversed);
+                }
+                break;
 
                 case 1:
                     if (isClockwise()) {
-                        dh.runIt(ColorWave_Left);
+                        dh.setCurrentPacketList(ColorWave_Left);
                     } else {
-                        Collections.reverse(ColorWave_Left);
-                        dh.runIt(ColorWave_Left);
+                        ArrayList<Packet> reversed = new ArrayList<>();
+                        reversed.addAll(ColorWave_Left);
+                        Collections.reverse(reversed);
+                        dh.setCurrentPacketList(reversed);
                     }
                     break;
 
                 case 2:
                     if (isClockwise()) {
-                        dh.runIt(ColorWave_Right);
+                        dh.setCurrentPacketList(ColorWave_Right);
                     } else {
-                        Collections.reverse(ColorWave_Right);
-                        dh.runIt(ColorWave_Right);
+                        ArrayList<Packet> reversed = new ArrayList<>();
+                        reversed.addAll(ColorWave_Right);
+                        Collections.reverse(reversed);
+                        dh.setCurrentPacketList(reversed);
                     }
                     break;
 
 
                 case 3:
                     if (isClockwise()) {
-                        dh.runIt(ColorWave_Up);
+                        dh.setCurrentPacketList(ColorWave_Up);
                     } else {
-                        Collections.reverse(ColorWave_Up);
-                        dh.runIt(ColorWave_Up);
+                        ArrayList<Packet> reversed = new ArrayList<>();
+                        reversed.addAll(ColorWave_Up);
+                        Collections.reverse(reversed);
+                        dh.setCurrentPacketList(reversed);
                     }
                     break;
 
                 case 4:
                     if (isClockwise()) {
-                        dh.runIt(ColorWave_Down);
+                        dh.setCurrentPacketList(ColorWave_Down);
                     } else {
-                        Collections.reverse(ColorWave_Down);
-                        dh.runIt(ColorWave_Down);
+                        ArrayList<Packet> reversed = new ArrayList<>();
+                        reversed.addAll(ColorWave_Down);
+                        Collections.reverse(reversed);
+                        dh.setCurrentPacketList(reversed);
                     }
                     break;
 
                 default:
                     break;
-            }
-        } catch (UsbException e) {
         }
     }
 
@@ -152,14 +224,16 @@ public class ColorSettingsUtility {
      * ColorPulse
      */
     public static void ColorPulse() {
-        try {
-            if (isClockwise()) {
-                dh.runIt(ColorPulse);
-            } else { // Counterclockwise
-                Collections.reverse(ColorPulse);
-                dh.runIt(ColorPulse);
-            }
-        } catch (UsbException e) {
+        Controller.intervalSlider.setMin(SettingsIntervals.COLOR_PULSE_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.COLOR_PULSE_FAST);
+        Controller.intervalSlider.setValue(SettingsIntervals.COLOR_PULSE_MEDIUM);
+        if (isClockwise()) {
+            dh.setCurrentPacketList(ColorPulse);
+        } else { // Counterclockwise
+            ArrayList<Packet> reversed = new ArrayList<>();
+            reversed.addAll(ColorPulse);
+            Collections.reverse(reversed);
+            dh.setCurrentPacketList(reversed);
         }
     }
 
@@ -167,9 +241,9 @@ public class ColorSettingsUtility {
      * Visor()
      */
     public static void Visor() {
-        try {
-            dh.runIt(visorPacketList);
-        } catch (UsbException e) {
-        }
+        Controller.intervalSlider.setMin(SettingsIntervals.VISOR_SLOW);
+        Controller.intervalSlider.setMax(SettingsIntervals.VISOR_FAST);
+        Controller.intervalSlider.setValue(SettingsIntervals.VISOR_MEDIUM);
+        dh.setCurrentPacketList(visorPacketList);
     }
 }

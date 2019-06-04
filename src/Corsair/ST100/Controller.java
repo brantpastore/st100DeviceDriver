@@ -16,67 +16,47 @@ import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 
+import javax.usb.UsbException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * Controller class
+ */
 public class Controller implements Initializable {
+    /**
+     * Controller Logger
+     */
+    Logger nLogger = Logger.getLogger("ControllerLog");
 
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        spiralSlider.setMajorTickUnit(1);
-        spiralSlider.setShowTickMarks(true);
-        spiralSlider.valueProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                DeviceHandler.setInterval(newValue.longValue());
-                rate.setText(newValue.toString());
-            }
-        });
+    /**
+     *
+     */
+    public static DeviceHandler dh = null;
 
-        RainbowWaveSelection.setItems(FXCollections.observableArrayList("Left", "Right"));
-        RainbowWaveSelection.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                if (newValue.intValue() == 0) {
-                    ColorSettingsUtility.RainbowWave(0);
-                } else if (newValue.intValue() == 1) {
-                    ColorSettingsUtility.RainbowWave(1);
-                }
-            }
-        });
-
-        ColorWaveTypeSelection.setItems(FXCollections.observableArrayList("Default", "Left", "Right", "Up", "Down"));
-        ColorWaveTypeSelection.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                if (newValue.intValue() == 0) {
-                    ColorSettingsUtility.ColorWave(0);
-                } else if (newValue.intValue() == 1) {
-                    ColorSettingsUtility.ColorWave(1);
-                } else if (newValue.intValue() == 2) {
-                    ColorSettingsUtility.ColorWave(2);
-                } else if (newValue.intValue() == 3) {
-                    ColorSettingsUtility.ColorWave(3);
-                } else if (newValue.intValue() == 4) {
-                    ColorSettingsUtility.ColorWave(4);
-                }
-            }
-        });
+    /**
+     *
+     * @param dhandle
+     */
+    public static void setDh(DeviceHandler dhandle) {
+        dh = dhandle;
     }
 
-    public static void addRectangle(final Scene scene) {
-        Circle C = new Circle(200,150,100);
-        RadialGradient gradient1 = new RadialGradient(0,
-                .1,
-                100,
-                100,
-                200,
-                false,
-                CycleMethod.NO_CYCLE,
-                new Stop(0, Color.YELLOW),
-                new Stop(1, Color.RED));
-        C.setFill(gradient1);
-    }
+    /**
+     *
+     */
+    private static final int MAX_THREADS = 1;
+
+    /**
+     *
+     */
+    private ExecutorService executorService = Executors.newFixedThreadPool(MAX_THREADS);
 
     @FXML
     private AnchorPane anchor;
@@ -88,7 +68,7 @@ public class Controller implements Initializable {
     private Tab spiralRainbowTab;
 
     @FXML
-    private Slider spiralSlider = new Slider(0, 3, 1);
+    public static Slider intervalSlider = new Slider(SettingsIntervals.SPIRAL_RAINBOW_FAST, SettingsIntervals.SPIRAL_RAINBOW_SLOW, SettingsIntervals.SPIRAL_RAINBOW_MEDIUM);
 
     @FXML
     private Label rate;
@@ -123,9 +103,99 @@ public class Controller implements Initializable {
     @FXML
     private ToggleButton clockWise;
 
+    /**
+     *
+     * @param url
+     * @param rb
+     *
+     */
+    @Override
+    public void initialize(URL url, ResourceBundle rb) {
+        intervalSlider.setMax(2);
+        intervalSlider.setMin(0);
+        intervalSlider.setValue(1);
+        intervalSlider.setMajorTickUnit(1);
+        intervalSlider.setMinorTickCount(0);
+        intervalSlider.setSnapToTicks(true);
+        intervalSlider.setShowTickMarks(true);
+
+        intervalSlider.valueProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                //DeviceHandler.setInterval(newValue.longValue());
+                //rate.setText(String.valueOf(newValue.intValue()));
+                System.out.println(intervalSlider.getValue());
+            }
+        });
+
+
+        RainbowWaveSelection.setItems(FXCollections.observableArrayList("Left", "Right"));
+        RainbowWaveSelection.getSelectionModel().select(0);
+        RainbowWaveSelection.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                if (newValue.intValue() == 0) {
+                    ColorSettingsUtility.RainbowWave(0);
+                } else if (newValue.intValue() == 1) {
+                    ColorSettingsUtility.RainbowWave(1);
+                }
+            }
+        });
+
+        ColorWaveTypeSelection.setItems(FXCollections.observableArrayList("Default", "Left", "Right", "Up", "Down"));
+        ColorWaveTypeSelection.getSelectionModel().select(0);
+        ColorWaveTypeSelection.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                if (newValue.intValue() == 0) {
+                    ColorSettingsUtility.ColorWave(0);
+                } else if (newValue.intValue() == 1) {
+                    ColorSettingsUtility.ColorWave(1);
+                } else if (newValue.intValue() == 2) {
+                    ColorSettingsUtility.ColorWave(2);
+                } else if (newValue.intValue() == 3) {
+                    ColorSettingsUtility.ColorWave(3);
+                } else if (newValue.intValue() == 4) {
+                    ColorSettingsUtility.ColorWave(4);
+                }
+            }
+        });
+    }
+
+    /**
+     * RGB gradient used for custom color settings (unimplemented)
+     * @param scene
+     */
+    public static void addRectangle(final Scene scene) {
+        Circle C = new Circle(200,150,100);
+        RadialGradient gradient1 = new RadialGradient(0,
+                .1,
+                100,
+                100,
+                200,
+                false,
+                CycleMethod.NO_CYCLE,
+                new Stop(0, Color.YELLOW),
+                new Stop(1, Color.RED));
+        C.setFill(gradient1);
+    }
+
+    /**
+     * Used to change to the selected setting
+     * @param event
+     */
     @FXML
     void SetSetting(ActionEvent event) {
-        DeviceHandler.Abort(true);
+        executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
+            executorService.shutdownNow();
+        }
+
         if(settingsPane.getSelectionModel().getSelectedItem().getText().equals(spiralRainbowTab.getText())) {
             ColorSettingsUtility.SpiralRainbow();
         } else if (settingsPane.getSelectionModel().getSelectedItem().getText().equals(rainbowWaveTab.getText())) {
@@ -139,9 +209,19 @@ public class Controller implements Initializable {
         } else if (settingsPane.getSelectionModel().getSelectedItem().getText().equals(VisorTab.getText())) {
             ColorSettingsUtility.Visor();
         }
-        DeviceHandler.Abort(false);
+        try {
+            DeviceHandler.Abort(false);
+            executorService = Executors.newFixedThreadPool(MAX_THREADS);
+            executorService.execute(new DeviceHandler());
+        } catch (UsbException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
+        }
     }
 
+    /**
+     *
+     * @param event
+     */
     @FXML
     void setClockWise(ActionEvent event) {
         if (clockWise.isSelected()) {
@@ -153,6 +233,5 @@ public class Controller implements Initializable {
 
     @FXML
     void setColorWave(ActionEvent event) {
-
     }
 }

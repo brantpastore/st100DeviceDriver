@@ -58,7 +58,7 @@
             <ProgressBar fx:id="loadBar" layoutX="381.0" layoutY="477.0" prefWidth="200.0" progress="0.0" />
             <Button fx:id="SetButton" layoutX="659.0" layoutY="464.0" mnemonicParsing="false" onAction="#SetSetting" text="Set" />
             <ToggleButton fx:id="clockWise" layoutX="618.0" layoutY="426.0" mnemonicParsing="false" onAction="#setClockWise" text="Clockwise" />
-            <Slider fx:id="spiralSlider" layoutX="201.0" layoutY="474.0" />
+            <Slider fx:id="intervalSlider" layoutX="201.0" layoutY="474.0" />
             <Label fx:id="rate" layoutX="236.0" layoutY="487.0" prefHeight="16.0" prefWidth="94.0" text="Interval" />
          </children>
       </Pane>

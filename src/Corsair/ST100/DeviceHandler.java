@@ -9,8 +9,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.usb.*;
 
@@ -20,7 +22,13 @@ import static Corsair.ST100.Packets.initPacket;
  * DeviceHandler
  * Used to communicate between our program and our Corsair ST100 (model RDA0014) headset stand
  */
-public class DeviceHandler {
+public class DeviceHandler implements Runnable {
+
+    /**
+     * DeviceHandler Logger
+     */
+    private static Logger nLogger = Logger.getLogger("DHandlerLog");
+
     /**
      * 1b1c - corsair (vendor)
      */
@@ -47,23 +55,26 @@ public class DeviceHandler {
     /** bEndpointAddress     0x81  EP 1 IN */
     private static final byte IN_ENDPOINT = (byte)0x81;
 
+    /**
+     *
+     * @return
+     */
     public static long getInterval() {
         return interval;
     }
 
+    /**
+     *
+     * @param interval
+     */
     public static void setInterval(long interval) {
         DeviceHandler.interval = interval;
     }
 
+    /**
+     * The interval between each packet sent
+     */
     public static long interval = 0l;
-
-
-    public static void Abort(boolean abort) {
-        Abort = abort;
-    }
-
-    public static boolean Abort = false;
-
 
     /**
      * getDevice()
@@ -90,11 +101,44 @@ public class DeviceHandler {
 
 
     /**
+     * runThread
+     */
+    private Thread runThread;
+
+    /**
+     * used to end the current thread
+     * @param abort
+     */
+    public static void Abort(boolean abort) {
+        Abort = abort;
+    }
+
+    /**
+     * Used to end the current thread
+     */
+    public static boolean Abort = false;
+
+    /**
+     * The current list of packets being sent to the device
+     */
+    public static ArrayList<Packet> currentPacketList = new ArrayList<>();
+
+    /**
+     * Used to set the current list of packets being sent to the device
+     * @param list
+     */
+    public void setCurrentPacketList(ArrayList<Packet> list) {
+        this.currentPacketList.clear();
+        this.currentPacketList.addAll(list);
+    }
+
+    /**
      * DeviceHandler()
      * @throws SecurityException
      * @throws UsbException
      */
     public DeviceHandler() throws SecurityException, UsbException {
+        super();
         device = findCorsairStand(UsbHostManager.getUsbServices().getRootUsbHub());
         if (device == null) {
             System.err.println("not found.");
@@ -103,11 +147,12 @@ public class DeviceHandler {
         }
 
         Claim();
-
         usbEndpoint = usbInterface.getUsbEndpoint(OUT_ENDPOINT);
-
     }
 
+    /**
+     * Claims the interface of the selected device
+     */
     public static void Claim() {
         try {
             // Claim the interface
@@ -116,11 +161,14 @@ public class DeviceHandler {
             usbInterface.claim(new UsbInterfacePolicy() {
                 @Override
                 public boolean forceClaim(UsbInterface usbInterface) {
+                    nLogger.log(Level.INFO, "Device claimed");
                     return true;
                 }
             });
         } catch (UsbClaimException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
         } catch (UsbException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -129,9 +177,10 @@ public class DeviceHandler {
      */
     public void close() {
         try {
+            nLogger.log(Level.INFO, "Terminating interface");
             usbInterface.release();
-        } catch (UsbNotActiveException	| UsbDisconnectedException | UsbException e) {
-            e.printStackTrace();
+        } catch (UsbNotActiveException | UsbDisconnectedException | UsbException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -148,17 +197,14 @@ public class DeviceHandler {
             UsbDeviceDescriptor desc = device.getUsbDeviceDescriptor();
 
             if (desc.idVendor() == VENDOR_ID && desc.idProduct() == PRODUCT_ID) {
-
-                System.err.println("Found Corsair 1400 " + desc.idVendor() + " " + desc.idProduct());
+                nLogger.log(Level.INFO, "Found Corsair 1400 " + desc.idVendor() + " " + desc.idProduct());
                 return device;
             }
 
             if (device.isUsbHub()) {
-                //System.err.println("device.isUsbHub()" + " " + desc.idVendor() + " " + desc.idProduct());
                 device = findCorsairStand((UsbHub) device);
 
                 if (device != null) {
-
                     return device;
                 }
             }
@@ -166,6 +212,29 @@ public class DeviceHandler {
         return null;
     }
 
+    /**
+     * Our thread method
+     */
+    @Override
+    public void run() {
+        Abort(false);
+        runThread = Thread.currentThread();
+        nLogger.log(Level.INFO, "Thread starting");
+        try {
+            runIt(currentPacketList);
+        } catch(UsbException e) {
+            nLogger.log(Level.SEVERE, e.getMessage());
+        }
+    }
+
+    /**
+     * Interrupts the current thread
+     */
+    public void stop() {
+        nLogger.log(Level.WARNING, "Aborting current Thread");
+        Abort(true);
+        runThread.interrupt();
+    }
 
     /**
      *
@@ -174,22 +243,17 @@ public class DeviceHandler {
      * @throws UsbException
      * The Type is the arrayList packets given by the type of setting selected by the user
      */
-    public static void runIt(ArrayList<Packet> type) throws SecurityException, UsbException {
-        device = findCorsairStand(UsbHostManager.getUsbServices().getRootUsbHub());
-        if (device == null) {
-            System.err.println("not found.");
-            System.exit(1);
-            return;
-        }
-//        System.out.println("device: " + device);
+    public void runIt(ArrayList<Packet> type) throws SecurityException, UsbException {
+        nLogger.log(Level.INFO, "Thread starting...");
+        // System.out.println("device: " + device);
 
         // System.err.println(iface.getUsbInterfaceDescriptor());
-        List usbEndpoints = usbInterface.getUsbEndpoints();
+        // List usbEndpoints = usbInterface.getUsbEndpoints();
 
-        for (Object p : usbEndpoints) {
-//            System.err.println(((UsbEndpoint) p).getUsbEndpointDescriptor());
+        //for (Object p : usbEndpoints) {
+            //System.err.println(((UsbEndpoint) p).getUsbEndpointDescriptor());
             //System.err.println(((UsbEndpoint) p).getUsbEndpointDescriptor().bEndpointAddress());
-        }
+        //}
 
         UsbControlIrp irp = device.createUsbControlIrp(
                 (byte) (UsbConst.REQUESTTYPE_DIRECTION_IN
@@ -198,52 +262,56 @@ public class DeviceHandler {
                 UsbConst.REQUEST_GET_CONFIGURATION,
                 (short) 0,
                 (short) 0);
-
         irp.setData(new byte[1]);
 
         try {
             device.syncSubmit(irp);
+            nLogger.log(Level.INFO, "Sent IRP");
         } catch (IllegalArgumentException | UsbDisconnectedException | UsbException e) {
-            e.printStackTrace();
+            nLogger.log(Level.INFO, e.getMessage());
         }
-        //System.out.println("current configuration number "+irp.getData()[0]);
-//        System.out.println("getUsbEndpoints: " + usbInterface.getUsbEndpoints().size());
+
+        nLogger.log(Level.INFO, "current configuration number "+irp.getData()[0]);
+        nLogger.log(Level.INFO, "getUsbEndpoints: " + usbInterface.getUsbEndpoints().size());
 
         usbEndpoint = usbInterface.getUsbEndpoint(OUT_ENDPOINT);
         UsbPipe pipe = usbEndpoint.getUsbPipe();
 
         try {
-            new Thread(new Runnable() {
-                public void run() {
-                    while (true) {
-                        while (Abort == false) {
-                            try {
-                                if (!usbInterface.isClaimed()) {
-                                    Claim();
-                                }
-
-                                pipe.open();
-
-                                int sendIt = 0;
-                                sendIt = pipe.syncSubmit(initPacket);
-                                System.out.println("[InitPacket] " + sendIt + " bytes sent");
-
-                                for (Packet p : type) {
-                                    sendIt = pipe.syncSubmit(PacketManager.FormPacket(p.getBody()));
-                                    System.out.println(Arrays.toString(p.getBody()));
-                                    System.out.println(sendIt + " bytes sent");
-                                    Thread.sleep(interval);
-                                }
-                            } catch (UsbException e) {
-                            } catch (InterruptedException e) {
-                            }
-                        }
+            while (Boolean.valueOf(Abort).equals(false)) {
+                try {
+                    if (!usbInterface.isClaimed()) {
+                        Claim();
                     }
+                    if (pipe.isOpen() == false) {
+                        pipe.open();
+                        nLogger.log(Level.INFO, "Pipe opened successfully");
+                    }
+
+                    int sendIt = 0;
+                    sendIt = pipe.syncSubmit(initPacket);
+                    nLogger.log(Level.INFO, "[InitPacket] " + sendIt + " bytes sent");
+
+                    for (Packet p : type) {
+                        pipe.syncSubmit(PacketManager.FormPacket(p.getBody()));
+                        runThread.sleep(interval);
+                    }
+                } catch (ConcurrentModificationException e) {
+                    nLogger.log(Level.SEVERE, e.getMessage());
+                } catch (UsbException e) {
+                    nLogger.log(Level.SEVERE, e.getMessage());
+                } catch (InterruptedException e) {
+                    nLogger.log(Level.SEVERE, e.getMessage());
+                    return;
                 }
-            }).start();
+            }
         } finally {
-            pipe.close();
-            usbInterface.release();
+            try {
+                pipe.close();
+                usbInterface.release();
+            } catch (UsbException e) {
+                nLogger.log(Level.SEVERE, e.getMessage());
+            }
         }
     }
 
@@ -257,16 +325,15 @@ public class DeviceHandler {
         try {
             pipe.open();
             int sent = pipe.syncSubmit(data);
-            System.out.println(sent + " bytes sent");
         } catch (UsbNotActiveException | UsbNotClaimedException
                 | UsbDisconnectedException | UsbException e) {
-            e.printStackTrace();
+            nLogger.log(Level.SEVERE, e.getMessage());
         } finally {
             try {
                 pipe.close();
             } catch (UsbNotActiveException | UsbNotOpenException
                     | UsbDisconnectedException | UsbException e) {
-                e.printStackTrace();
+                nLogger.log(Level.INFO, e.getMessage());
             }
         }
     }
@@ -285,7 +352,7 @@ public class DeviceHandler {
         if (result != LibUsb.SUCCESS) {
             throw new LibUsbException("Unable to read data", result);
         }
-        System.out.println(transferred.get() + " bytes read from device");
+        nLogger.log(Level.INFO, transferred.get() + " bytes read from device");
         return buffer;
     }
 }

@@ -4,44 +4,67 @@ import java.io.UnsupportedEncodingException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class that connects to our SQLite database
  */
 public class SQLiteDriverConnection {
+    /**
+     * SQLiteDriverConnection Logger
+     */
+    private static Logger nLogger = Logger.getLogger("SDriverConnectionLog");
+
+    /**
+     * Connection variable stored
+     */
     private static Connection conn;
+
+    /**
+     *  Path to where the database file is stored
+     */
     private static String url = "jdbc:sqlite:./packets.db";
 
+    /**
+     *
+     * @return
+     */
     public static Connection Connect() {
         conn = null;
 
         try {
             conn = DriverManager.getConnection(url);
-            System.out.println("[SQLite]: Connecting to db..");
-            if (conn != null) {
-                System.out.println(" Success!");
-            } else {
-                System.out.println(" Error establising connection.");
-            }
+            String res = "";
+            res = (conn != null) ? " operation successful" : " Error establising connection.";
+            nLogger.log(Level.INFO, "[SQLite]: Connecting and querying SQLite database file.. " + res);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
         return conn;
     }
 
+    /**
+     *
+     * @param path
+     * @param name
+     */
     public static void CreateDatabase(String path, String name) {
         url = "jdbc:sqlite:"+ path + name;
 
         try (Connection conn = DriverManager.getConnection(url)) {
             if (conn != null) {
                 DatabaseMetaData meta = conn.getMetaData();
-                System.out.println("New database " + name + " created.");
+                nLogger.log(Level.INFO, "New database " + name + " created.");
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
+    /**
+     *
+     */
     public static void CreatePacketTable() {
         String packetDataTable = "CREATE TABLE IF NOT EXISTS packets (\n"
                 + " packetID integer UNIQUE PRIMARY KEY,\n"
@@ -80,14 +103,17 @@ public class SQLiteDriverConnection {
             Statement stmt = conn.createStatement()) {
             boolean pdtRes = stmt.execute(packetDataTable);
             if (pdtRes) {
-                System.out.println("[SQLite]: packet data table created successfully!");
+                nLogger.log(Level.INFO, "[SQLite]: packet data table created successfully!");
             }
 
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
+    /**
+     *
+     */
     public static void CreateCustomSettingsTable() {
         String customFilter = "CREATE TABLE IF NOT EXISTS customSetting (\n"
                 + " label String NOT NULL,\n"
@@ -98,13 +124,18 @@ public class SQLiteDriverConnection {
              Statement stmt = conn.createStatement()) {
             boolean cstRes = stmt.execute(customFilter);
             if (cstRes) {
-                System.out.println("[SQLite]: Custom filter table created successfully!");
+                nLogger.log(Level.INFO, "[SQLite]: Custom filter table created successfully!");
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
+    /**
+     *
+     * @param label
+     * @param packetData
+     */
     public void InsertPacketDataTable(String label, ArrayList<Byte> packetData) {
         this.InsertPacketData(label, packetData.get(0),  packetData.get(1), packetData.get(2),
                 packetData.get(3), packetData.get(4),  packetData.get(5),
@@ -117,6 +148,38 @@ public class SQLiteDriverConnection {
                 packetData.get(24),  packetData.get(25),  packetData.get(26), packetData.get(27));
     }
 
+    /**
+     *
+     * @param label
+     * @param SideOneByteOne
+     * @param SideOneByteTwo
+     * @param SideOneByteThree
+     * @param CornerFourByteOne
+     * @param CornerFourByteTwo
+     * @param CornerFourByteThree
+     * @param SideFourByteOne
+     * @param SideFourByteTwo
+     * @param SideFourByteThree
+     * @param CornerThreeByteOne
+     * @param CornerThreeByteTwo
+     * @param CornerThreeByteThree
+     * @param LogoByteOne
+     * @param LogoByteTwo
+     * @param LogoByteThree
+     * @param SideThreeByteOne
+     * @param SideThreeByteTwo
+     * @param SideThreeByteThree
+     * @param CornerTwoByteOne
+     * @param CornerTwoByteTwo
+     * @param CornerTwoByteThree
+     * @param SideTwoByteOne
+     * @param SideTwoByteTwo
+     * @param SideTwoByteThree
+     * @param CornerOneByteOne
+     * @param CornerOneByteTwo
+     * @param CornerOneByteThree
+     * @param UNKNOWN
+     */
     public void InsertPacketData(String label, byte SideOneByteOne,  byte SideOneByteTwo, byte SideOneByteThree,
                                  byte CornerFourByteOne, byte CornerFourByteTwo, byte CornerFourByteThree,
                                  byte SideFourByteOne, byte SideFourByteTwo, byte SideFourByteThree,
@@ -178,12 +241,17 @@ public class SQLiteDriverConnection {
                 pstmt.setString(28, new String(new byte[]{ (byte)CornerOneByteThree }, "US-ASCII"));
                 pstmt.setString(29, new String(new byte[]{ (byte)UNKNOWN }, "US-ASCII"));
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         } catch (UnsupportedEncodingException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
+    /**
+     *
+     * @param label
+     * @param interval
+     */
     public void InsertCustomSetting(String label, int interval) {
         String sql = "INSERT INTO customSetting(label, interval) VALUES(?,?)";
 
@@ -191,10 +259,15 @@ public class SQLiteDriverConnection {
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
     }
 
+    /**
+     *
+     * @param label
+     * @return
+     */
     public ArrayList SelectAllLabel(String label) {
         ArrayList resultList = new ArrayList();
         String sql = "SELECT * from packets WHERE label=?";
@@ -239,7 +312,7 @@ public class SQLiteDriverConnection {
             }
             return resultList;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
         return null;
     }

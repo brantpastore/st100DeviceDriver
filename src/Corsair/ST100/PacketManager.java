@@ -8,8 +8,12 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PacketManager extends Thread {
+    private static Logger nLogger = Logger.getLogger("PManagerLog");
+
     /** Packets enum structure */
     public static Packets packets;
 
@@ -35,7 +39,7 @@ public class PacketManager extends Thread {
 
             return formedPacket;
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            nLogger.log(Level.SEVERE, e.getMessage());
         }
         return null;
     }
